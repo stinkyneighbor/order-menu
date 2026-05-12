@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>家傳小吃攤 - 線上點餐</title>
+    <style>
+        body { font-family: '微軟正黑體', sans-serif; padding: 20px; max-width: 500px; margin: auto; background-color: #f9f9f9; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h2 { color: #d35400; text-align: center; margin-top: 0; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; color: #333; }
+        input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 16px; }
+        
+        /* 菜單品項樣式 */
+        .menu-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px dashed #ddd; }
+        .menu-name { font-size: 16px; font-weight: bold; }
+        .menu-price { color: #e74c3c; font-weight: bold; margin-right: 10px; }
+        .qty-control { display: flex; align-items: center; }
+        .qty-btn { background: #eee; border: none; padding: 5px 15px; font-size: 18px; border-radius: 5px; cursor: pointer; }
+        .qty-input { width: 40px; text-align: center; border: none; font-size: 16px; font-weight: bold; background: transparent; }
+        
+        .total-price { font-size: 24px; color: #e74c3c; font-weight: bold; }
+        button.submit-btn { width: 100%; padding: 15px; background-color: #ff9800; color: white; border: none; font-size: 18px; font-weight: bold; cursor: pointer; border-radius: 8px; margin-top: 10px; box-shadow: 0 4px 6px rgba(255, 152, 0, 0.3); }
+        button.submit-btn:hover { background-color: #e68a00; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>🍜 家傳小吃攤</h2>
+        
+        <div class="form-group">
+            <label>👤 您的稱呼：</label>
+            <input type="text" id="customerName" placeholder="例如：陳先生">
+        </div>
+
+        <div class="form-group">
+            <label>📝 餐點內容：</label>
+            <!-- 品項 1 -->
+            <div class="menu-item">
+                <div>
+                    <div class="menu-name">滷肉飯 (小)</div>
+                    <div class="menu-price">$35</div>
+                </div>
+                <div class="qty-control">
+                    <button class="qty-btn" onclick="changeQty('item1', -1)">-</button>
+                    <input type="text" id="item1" class="qty-input item-data" value="0" data-name="滷肉飯(小)" data-price="35" readonly>
+                    <button class="qty-btn" onclick="changeQty('item1', 1)">+</button>
+                </div>
+            </div>
+            <!-- 品項 2 -->
+            <div class="menu-item">
+                <div>
+                    <div class="menu-name">滷肉飯 (大)</div>
+                    <div class="menu-price">$50</div>
+                </div>
+                <div class="qty-control">
+                    <button class="qty-btn" onclick="changeQty('item2', -1)">-</button>
+                    <input type="text" id="item2" class="qty-input item-data" value="0" data-name="滷肉飯(大)" data-price="50" readonly>
+                    <button class="qty-btn" onclick="changeQty('item2', 1)">+</button>
+                </div>
+            </div>
+            <!-- 品項 3 -->
+            <div class="menu-item">
+                <div>
+                    <div class="menu-name">貢丸湯</div>
+                    <div class="menu-price">$30</div>
+                </div>
+                <div class="qty-control">
+                    <button class="qty-btn" onclick="changeQty('item3', -1)">-</button>
+                    <input type="text" id="item3" class="qty-input item-data" value="0" data-name="貢丸湯" data-price="30" readonly>
+                    <button class="qty-btn" onclick="changeQty('item3', 1)">+</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>💰 總金額：</label>
+            <div class="total-price">$ <span id="displayTotal">0</span></div>
+        </div>
+
+        <div class="form-group">
+            <label>✏️ 備註 (可不填)：</label>
+            <input type="text" id="notes" placeholder="例如：不要香菜、12:30取餐">
+        </div>
+
+        <button onclick="submitOrder()" id="submitBtn" class="submit-btn">🚀 送出訂單</button>
+    </div>
+
+    <script>
+        // 控制數量增減與自動計算總計
+        function changeQty(inputId, amount) {
+            let inputField = document.getElementById(inputId);
+            let currentVal = parseInt(inputField.value);
+            let newVal = currentVal + amount;
+            if (newVal < 0) newVal = 0; // 數量不能為負數
+            inputField.value = newVal;
+            calculateTotal();
+        }
+
+        function calculateTotal() {
+            let items = document.querySelectorAll('.item-data');
+            let total = 0;
+            items.forEach(item => {
+                let qty = parseInt(item.value);
+                let price = parseInt(item.getAttribute('data-price'));
+                total += qty * price;
+            });
+            document.getElementById('displayTotal').innerText = total;
+        }
+
+        // 送出訂單的邏輯
+        function submitOrder() {
+            const btn = document.getElementById("submitBtn");
+            const customerName = document.getElementById("customerName").value;
+            const notes = document.getElementById("notes").value;
+            const total = document.getElementById("displayTotal").innerText;
+
+            if(customerName.trim() === "") {
+                alert("請輸入您的稱呼喔！");
+                return;
+            }
+            if(parseInt(total) === 0) {
+                alert("您還沒有點選餐點喔！");
+                return;
+            }
+
+            // 整理客人點的餐點文字
+            let orderItemsArray = [];
+            document.querySelectorAll('.item-data').forEach(item => {
+                let qty = parseInt(item.value);
+                if (qty > 0) {
+                    let name = item.getAttribute('data-name');
+                    orderItemsArray.push(name + " x" + qty);
+                }
+            });
+            let orderItemsString = orderItemsArray.join(", ");
+
+            // 這裡替換成你的 Google Apps Script 網址
+            const scriptUrl = "https://script.google.com/macros/s/AKfycbynN_sVX8Fonmrwd_oxGOdbaebHz_lwgexbfIWZQI_yqrsVOVaaXwxjx5PEc1m_r6XXDQ/exec"; 
+            
+            btn.innerText = "訂單傳送中...";
+            btn.disabled = true;
+
+            const orderData = {
+                customerName: customerName,
+                orderItems: orderItemsString,
+                totalPrice: total,
+                notes: notes
+            };
+
+            // 呼叫後台 (新的：加上轉址與純文字宣告，繞過瀏覽器阻擋)
+            fetch(scriptUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "text/plain;charset=utf-8"
+                },
+                body: JSON.stringify(orderData),
+                redirect: "follow"
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert("訂單已成功送出！老闆已收到通知。");
+                window.location.reload(); // 送出後重整頁面清空資料
+            })
+            .catch(error => {
+                alert("送出失敗，請檢查網路連線，或直撥訂餐專線0933255870");
+            })
+            .finally(() => {
+                btn.innerText = "🚀 送出訂單";
+                btn.disabled = false;
+            });
+        }
+    </script>
+</body>
+</html>
