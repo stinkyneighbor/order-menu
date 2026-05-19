@@ -47,7 +47,7 @@
 
         button.submit-btn { width: 100%; padding: 16px; background-color: #ff9800; color: white; border: none; font-size: 18px; font-weight: bold; cursor: pointer; border-radius: 8px; margin-top: 10px; box-shadow: 0 4px 6px rgba(255, 152, 0, 0.3); }
 
-        /* 彈出視窗 (Modal) 樣式修正：確保必定置頂且看得見 */
+        /* 彈出視窗 (Modal) 樣式 */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: flex-end; }
         .modal-content { background: white; width: 100%; max-width: 500px; border-radius: 20px 20px 0 0; padding: 25px; box-sizing: border-box; animation: slideUp 0.2s ease-out; max-height: 85vh; overflow-y: auto; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
@@ -166,4 +166,244 @@
             { id: 't2', name: '臭豆腐(大)', price: 75, type: 'tofu' },
             { id: 'p1', name: '蔥抓餅(無蛋)', price: 25, type: 'pancake' },
             { id: 'p2', name: '蔥抓餅(加蛋)', price: 40, type: 'pancake' },
-            { id: 'p3
+            { id: 'p3', name: '蔥肉餅(無蛋)', price: 30, type: 'pancake' },
+            { id: 'p4', name: '蔥肉餅(加蛋)', price: 45, type: 'pancake' }
+        ];
+
+        let cart = []; 
+        let currentItem = null; 
+        let currentQty = 1;
+
+        // --- 2. 初始化網頁 ---
+        window.onload = function() {
+            renderMenu();
+            initTimeSelects();
+        };
+
+        function renderMenu() {
+            const menuList = document.getElementById('menuList');
+            menuData.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'menu-item-banner';
+                div.onclick = () => openModal(item);
+                div.innerHTML = `
+                    <div>
+                        <div class="menu-item-name">${item.name}</div>
+                        <div class="menu-item-price">$${item.price}</div>
+                    </div>
+                    <div class="add-badge">選規格</div>
+                `;
+                menuList.appendChild(div);
+            });
+        }
+
+        function initTimeSelects() {
+            const monthSelect = document.getElementById("timeMonth");
+            const daySelect = document.getElementById("timeDay");
+            const hourSelect = document.getElementById("timeHour");
+            
+            for(let i=14; i<=21; i++) {
+                let h = i < 10 ? "0"+i : i;
+                hourSelect.options.add(new Option(h, h));
+            }
+            
+            let today = new Date();
+            let dateOptions = [];
+            
+            for(let i=0; i<7; i++) {
+                let d = new Date();
+                d.setDate(today.getDate() + i);
+                dateOptions.push({ m: d.getMonth() + 1, d: d.getDate() });
+            }
+            
+            let months = [...new Set(dateOptions.map(item => item.m))];
+            months.forEach(m => monthSelect.options.add(new Option(m, m)));
+            
+            monthSelect.value = today.getMonth() + 1;
+            
+            function updateDays() {
+                daySelect.innerHTML = "";
+                let selectedMonth = parseInt(monthSelect.value);
+                dateOptions.forEach(item => {
+                    if(item.m === selectedMonth) {
+                        daySelect.options.add(new Option(item.d, item.d));
+                    }
+                });
+                
+                if (selectedMonth === (today.getMonth() + 1)) {
+                    daySelect.value = today.getDate();
+                }
+            }
+            
+            monthSelect.onchange = updateDays;
+            updateDays(); 
+        }
+
+        // --- 3. 彈出客製化視窗邏輯 ---
+        function openModal(item) {
+            currentItem = item;
+            currentQty = 1;
+            document.getElementById('modalTitle').innerText = item.name;
+            document.getElementById('modalQty').innerText = currentQty;
+            updateModalBtnPrice();
+
+            let bodyHtml = '';
+            if(item.type === 'noodle') {
+                bodyHtml += `
+                    <div class="option-group">
+                        <div class="option-title">配料調整 (可複選)：</div>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" value="不要加蒜" class="custom-chk"> 不要加蒜</label>
+                            <label><input type="checkbox" value="不要加香菜" class="custom-chk"> 不要加香菜</label>
+                        </div>
+                    </div>`;
+            }
+            if(item.type === 'tofu') {
+                bodyHtml += `
+                    <div class="option-group">
+                        <div class="option-title">口感與配料 (可複選)：</div>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" value="酥一點" class="custom-chk"> 酥一點</label>
+                            <label><input type="checkbox" value="不要加蒜" class="custom-chk"> 不要加蒜</label>
+                        </div>
+                    </div>`;
+            }
+            bodyHtml += `
+                <div class="option-group">
+                    <div class="option-title">辣度選擇：</div>
+                    <select id="spiceLevel">
+                        <option value="不要辣">不要辣</option>
+                        <option value="微辣">微辣</option>
+                        <option value="小辣">小辣</option>
+                        <option value="中辣">中辣</option>
+                        <option value="大辣">大辣</option>
+                    </select>
+                </div>`;
+            
+            document.getElementById('modalBody').innerHTML = bodyHtml;
+            document.getElementById('itemModal').style.display = 'flex';
+        }
+
+        function closeModal(e) {
+            if(e.target.id === 'itemModal') {
+                document.getElementById('itemModal').style.display = 'none';
+            }
+        }
+
+        function changeModalQty(amount) {
+            currentQty += amount;
+            if(currentQty < 1) currentQty = 1;
+            document.getElementById('modalQty').innerText = currentQty;
+            updateModalBtnPrice();
+        }
+
+        function updateModalBtnPrice() {
+            document.getElementById('modalBtnPrice').innerText = currentItem.price * currentQty;
+        }
+
+        // --- 4. 購物車清單管理 ---
+        function addToCart() {
+            let details = [];
+            document.querySelectorAll('.custom-chk:checked').forEach(chk => details.push(chk.value));
+            
+            let spice = document.getElementById('spiceLevel').value;
+            if(spice !== "不要辣") details.push(spice);
+
+            cart.push({
+                name: currentItem.name,
+                price: currentItem.price,
+                qty: currentQty,
+                details: details.length > 0 ? `(${details.join(', ')})` : ''
+            });
+
+            document.getElementById('itemModal').style.display = 'none';
+            renderCart();
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            renderCart();
+        }
+
+        function renderCart() {
+            const content = document.getElementById('cartContent');
+            let total = 0;
+            
+            if(cart.length === 0) {
+                content.innerHTML = '<div class="cart-empty">🛒 購物車目前是空的喔！</div>';
+                document.getElementById('cartTotal').innerText = 0;
+                return;
+            }
+
+            content.innerHTML = '';
+            cart.forEach((item, index) => {
+                let subtotal = item.price * item.qty;
+                total += subtotal;
+                
+                content.innerHTML += `
+                    <div class="cart-item">
+                        <div class="cart-item-info">
+                            <div class="cart-item-title">${item.name} x ${item.qty}</div>
+                            <div class="cart-item-details">${item.details}</div>
+                        </div>
+                        <div class="cart-item-right">
+                            <div class="cart-item-price">$${subtotal}</div>
+                            <button class="delete-btn" onclick="removeFromCart(${index})">❌ 刪除</button>
+                        </div>
+                    </div>`;
+            });
+            document.getElementById('cartTotal').innerText = total;
+        }
+
+        // --- 5. 打包並發送訂單 ---
+        function submitOrder() {
+            if(cart.length === 0) { alert("您的購物車還是空的喔！"); return; }
+            
+            const name = document.getElementById("customerName").value;
+            const phone = document.getElementById("customerPhone").value;
+            if(name.trim() === "") { alert("請填寫您的稱呼！"); return; }
+            if(phone.trim() === "") { alert("請填寫手機號碼！"); return; }
+
+            const total = document.getElementById("cartTotal").innerText;
+            const customNotes = document.getElementById("notes").value;
+            const tM = document.getElementById("timeMonth").value;
+            const tD = document.getElementById("timeDay").value;
+            const tH = document.getElementById("timeHour").value;
+            const tMin = document.getElementById("timeMin").value;
+            const utensils = document.querySelector('input[name="utensils"]:checked').value;
+
+            const btn = document.getElementById("submitBtn");
+            btn.innerText = "訂單傳送中...";
+            btn.disabled = true;
+
+            let orderItemsString = cart.map(item => `${item.name} x${item.qty} ${item.details}`).join("\n");
+            
+            const orderData = {
+                customerName: `${name} (${phone})`,
+                orderItems: orderItemsString,
+                totalPrice: total,
+                notes: `[取餐] ${tM}月${tD}日 ${tH}:${tMin}\n[餐具] ${utensils}\n[備註] ${customNotes}`
+            };
+
+            const scriptUrl = "https://script.google.com/macros/s/AKfycbynN_sVX8Fonmrwd_oxGOdbaebHz_lwgexbfIWZQI_yqrsVOVaaXwxjx5PEc1m_r6XXDQ/exec"; 
+
+            fetch(scriptUrl, {
+                method: "POST",
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify(orderData),
+                redirect: "follow"
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert("🎉 訂單已成功送出！高山頂小吃已收到通知囉！");
+                window.location.reload();
+            })
+            .catch(error => {
+                alert("送出失敗，請檢查網路連線，或直接向老闆點餐喔！");
+                btn.innerText = "🚀 確認送出訂單";
+                btn.disabled = false;
+            });
+        }
+    </script>
+</body>
+</html>
