@@ -74,7 +74,7 @@
     <div class="card" style="padding-bottom: 5px;">
         <h2>🍜 高山頂美食小吃</h2>
         <div class="store-info">
-            🕒 營業時間：週一 ~ 週六 14:00 - 21:00 (週日公休)<br>
+            🕒 營業時間：週一 ~ 週六 14:30 - 21:00 (週日公休)<br>
             📞 如需大量訂購請來電：<strong>0933-255-870</strong>
         </div>
     </div>
@@ -112,12 +112,7 @@
                 <select id="timeMonth"></select>月
                 <select id="timeDay"></select>日
                 <select id="timeHour"></select>時
-                <select id="timeMin">
-                    <option value="00">00</option>
-                    <option value="15">15</option>
-                    <option value="30">30</option>
-                    <option value="45">45</option>
-                </select>分
+                <select id="timeMin"></select>分
             </div>
         </div>
         <div class="form-group">
@@ -129,7 +124,7 @@
         </div>
         <div class="form-group">
             <label>✏️ 其他備註 (選填)：</label>
-            <input type="text" id="notes" placeholder="如有其他特殊需求請寫在這裡">
+            <input type="text" id="notes" placeholder="如有高度客製或其他特殊需求請寫在這裡">
         </div>
 
         <button onclick="submitOrder()" id="submitBtn" class="submit-btn">🚀 確認送出訂單</button>
@@ -167,7 +162,6 @@
                 <div style="font-size: 18px; font-weight: bold; color: #2c3e50; margin-bottom: 20px; line-height: 1.5; background: #fff3e0; padding: 10px; border-radius: 6px;">
                     取餐時請報電話後三碼或出示訂餐明細
                 </div>
-                
                 <div style="text-align: left; background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 15px; line-height: 1.6; max-height: 35vh; overflow-y: auto;">
                     <div style="font-weight: bold; color: #d35400; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-bottom: 10px;">🧾 您的訂餐明細彙整：</div>
                     <div id="successDetailContent"></div>
@@ -221,19 +215,40 @@
             });
         }
 
+        // 精準連動：最早 14:30，最晚 21:00
         function initTimeSelects() {
             const monthSelect = document.getElementById("timeMonth");
             const daySelect = document.getElementById("timeDay");
             const hourSelect = document.getElementById("timeHour");
+            const minSelect = document.getElementById("timeMin");
             
+            // 營業小時：14 點至 21 點
             for(let i=14; i<=21; i++) {
                 let h = i < 10 ? "0"+i : i;
                 hourSelect.options.add(new Option(h, h));
             }
             
+            // 小時與分鐘連動防呆
+            function updateMinutes() {
+                minSelect.innerHTML = "";
+                let hr = parseInt(hourSelect.value);
+                if (hr === 14) {
+                    minSelect.options.add(new Option("30", "30"));
+                    minSelect.options.add(new Option("45", "45"));
+                } else if (hr === 21) {
+                    minSelect.options.add(new Option("00", "00"));
+                } else {
+                    minSelect.options.add(new Option("00", "00"));
+                    minSelect.options.add(new Option("15", "15"));
+                    minSelect.options.add(new Option("30", "30"));
+                    minSelect.options.add(new Option("45", "45"));
+                }
+            }
+            
+            hourSelect.onchange = updateMinutes;
+            
             let today = new Date();
             let dateOptions = [];
-            
             for(let i=0; i<7; i++) {
                 let d = new Date();
                 d.setDate(today.getDate() + i);
@@ -242,7 +257,6 @@
             
             let months = [...new Set(dateOptions.map(item => item.m))];
             months.forEach(m => monthSelect.options.add(new Option(m, m)));
-            
             monthSelect.value = today.getMonth() + 1;
             
             function updateDays() {
@@ -253,7 +267,6 @@
                         daySelect.options.add(new Option(item.d, item.d));
                     }
                 });
-                
                 if (selectedMonth === (today.getMonth() + 1)) {
                     daySelect.value = today.getDate();
                 }
@@ -261,6 +274,7 @@
             
             monthSelect.onchange = updateDays;
             updateDays(); 
+            updateMinutes(); // 初始化分鐘
         }
 
         // --- 3. 彈出客製化視窗邏輯 ---
@@ -269,8 +283,7 @@
             currentQty = 1;
             document.getElementById('modalTitle').innerText = item.name;
             document.getElementById('modalQty').innerText = currentQty;
-            updateModalBtnPrice();
-
+            
             let bodyHtml = '';
             if(item.type === 'noodle') {
                 bodyHtml += `
@@ -289,6 +302,7 @@
                         <div class="checkbox-group">
                             <label><input type="checkbox" value="酥一點" class="custom-chk"> 酥一點</label>
                             <label><input type="checkbox" value="不要加蒜" class="custom-chk"> 不要加蒜</label>
+                            <label><input type="checkbox" value="不要泡菜" class="custom-chk" id="noKimchiChk" onchange="updateModalBtnPrice()"> 不要泡菜 (每份折10元)</label>
                         </div>
                     </div>`;
             }
@@ -305,6 +319,7 @@
                 </div>`;
             
             document.getElementById('modalBody').innerHTML = bodyHtml;
+            updateModalBtnPrice();
             document.getElementById('itemModal').style.display = 'flex';
         }
 
@@ -321,21 +336,34 @@
             updateModalBtnPrice();
         }
 
+        // 即時計算彈出視窗內的折扣總價
         function updateModalBtnPrice() {
-            document.getElementById('modalBtnPrice').innerText = currentItem.price * currentQty;
+            let basePrice = currentItem.price;
+            let noKimchi = document.getElementById('noKimchiChk');
+            if (noKimchi && noKimchi.checked) {
+                basePrice -= 10;
+            }
+            document.getElementById('modalBtnPrice').innerText = basePrice * currentQty;
         }
 
         // --- 4. 購物車清單管理 ---
         function addToCart() {
             let details = [];
-            document.querySelectorAll('.custom-chk:checked').forEach(chk => details.push(chk.value));
+            let finalPrice = currentItem.price;
+            
+            document.querySelectorAll('.custom-chk:checked').forEach(chk => {
+                details.push(chk.value);
+                if (chk.value === "不要泡菜") {
+                    finalPrice -= 10; // 購物車單件單價折扣 10 元
+                }
+            });
             
             let spice = document.getElementById('spiceLevel').value;
             if(spice !== "不要辣") details.push(spice);
 
             cart.push({
                 name: currentItem.name,
-                price: currentItem.price,
+                price: finalPrice,
                 qty: currentQty,
                 details: details.length > 0 ? `(${details.join(', ')})` : ''
             });
@@ -419,11 +447,9 @@
             })
             .then(response => response.json())
             .then(data => {
-                // 1. 自動擷取手機後三碼並顯示
                 const phoneTail = phone.trim().slice(-3);
                 document.getElementById("successPhoneTail").innerText = `後三碼：${phoneTail}`;
                 
-                // 2. 彙整明細內容
                 let itemSummaryHtml = cart.map(item => `• ${item.name} x ${item.qty} <span style="color:#718096; font-size:13px;">${item.details}</span>`).join('<br>');
                 
                 let detailHtml = `
@@ -441,8 +467,6 @@
                 }
                 
                 document.getElementById("successDetailContent").innerHTML = detailHtml;
-                
-                // 3. 彈出電子收據視窗
                 document.getElementById("successModal").style.display = "flex";
             })
             .catch(error => {
