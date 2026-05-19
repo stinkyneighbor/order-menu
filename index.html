@@ -3,76 +3,255 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>家傳小吃攤 - 線上點餐</title>
+    <title>高山頂美食小吃 - 線上點餐</title>
     <style>
-        body { font-family: '微軟正黑體', sans-serif; padding: 20px; max-width: 500px; margin: auto; background-color: #f9f9f9; }
+        body { font-family: '微軟正黑體', sans-serif; padding: 20px; max-width: 500px; margin: auto; background-color: #f9f9f9; color: #333; }
         .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        h2 { color: #d35400; text-align: center; margin-top: 0; }
+        h2 { color: #d35400; text-align: center; margin-top: 0; margin-bottom: 5px; }
+        .sub-title { text-align: center; color: #7f8c8d; font-size: 14px; margin-bottom: 25px; }
         .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: bold; color: #333; }
-        input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 16px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; color: #2c3e50; }
+        label span { color: #e74c3c; font-size: 12px; margin-left: 5px; }
+        input[type="text"], select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 16px; background-color: #fff; }
         
-        /* 菜單品項樣式 */
-        .menu-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px dashed #ddd; }
+        /* 時間下拉選單排版 */
+        .time-group { display: flex; gap: 5px; align-items: center; }
+        .time-group select { flex: 1; text-align: center; }
+
+        /* 餐點品項樣式 */
+        .item-container { border-bottom: 1px solid #edf2f7; padding: 15px 0; }
+        .menu-item { display: flex; justify-content: space-between; align-items: center; }
         .menu-name { font-size: 16px; font-weight: bold; }
         .menu-price { color: #e74c3c; font-weight: bold; margin-right: 10px; }
         .qty-control { display: flex; align-items: center; }
-        .qty-btn { background: #eee; border: none; padding: 5px 15px; font-size: 18px; border-radius: 5px; cursor: pointer; }
+        .qty-btn { background: #edf2f7; border: none; padding: 6px 16px; font-size: 18px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .qty-btn:hover { background: #e2e8f0; }
         .qty-input { width: 40px; text-align: center; border: none; font-size: 16px; font-weight: bold; background: transparent; }
         
-        .total-price { font-size: 24px; color: #e74c3c; font-weight: bold; }
-        button.submit-btn { width: 100%; padding: 15px; background-color: #ff9800; color: white; border: none; font-size: 18px; font-weight: bold; cursor: pointer; border-radius: 8px; margin-top: 10px; box-shadow: 0 4px 6px rgba(255, 152, 0, 0.3); }
+        /* 客製化選項區塊 */
+        .custom-options { display: none; background-color: #f7fafc; padding: 12px; border-radius: 6px; margin-top: 10px; border-left: 4px solid #ff9800; }
+        .option-title { font-size: 13px; font-weight: bold; color: #4a5568; margin-bottom: 6px; }
+        .checkbox-group { display: flex; gap: 15px; margin-bottom: 8px; font-size: 14px; }
+        .checkbox-group label { font-weight: normal; display: flex; align-items: center; gap: 4px; cursor: pointer; margin: 0; }
+        .checkbox-group input { width: 16px; height: 16px; cursor: pointer; }
+        .spice-select { padding: 4px 8px; font-size: 14px; width: auto; display: inline-block; height: auto; margin-top: 4px; }
+
+        .total-price { font-size: 26px; color: #e74c3c; font-weight: bold; }
+        button.submit-btn { width: 100%; padding: 15px; background-color: #ff9800; color: white; border: none; font-size: 18px; font-weight: bold; cursor: pointer; border-radius: 8px; margin-top: 10px; box-shadow: 0 4px 6px rgba(255, 152, 0, 0.3); transition: background 0.2s; }
         button.submit-btn:hover { background-color: #e68a00; }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <h2>🍜 家傳小吃攤</h2>
+        <h2>🍜 高山頂美食小吃</h2>
+        <div class="sub-title">線上即時點餐系統</div>
         
         <div class="form-group">
-            <label>👤 您的稱呼：</label>
+            <label>👤 您的稱呼：<span>*必填</span></label>
             <input type="text" id="customerName" placeholder="例如：陳先生">
         </div>
 
         <div class="form-group">
-            <label>📝 餐點內容：</label>
-            <!-- 品項 1 -->
-            <div class="menu-item">
-                <div>
-                    <div class="menu-name">滷肉飯 (小)</div>
-                    <div class="menu-price">$35</div>
+            <label>📱 手機號碼：<span>*必填 (訂單聯繫用，絕不外流)</span></label>
+            <input type="text" id="customerPhone" placeholder="例如：0912345678">
+        </div>
+
+        <div class="form-group">
+            <label>🕒 預計取餐時間：<span>*必填</span></label>
+            <div class="time-group">
+                <select id="timeMonth"></select>月
+                <select id="timeDay"></select>日
+                <select id="timeHour"></select>時
+                <select id="timeMin">
+                    <option value="00">00</option>
+                    <option value="15">15</option>
+                    <option value="30">30</option>
+                    <option value="45">45</option>
+                </select>分
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>🥢 需要餐具嗎？<span>*必選</span></label>
+            <div class="checkbox-group">
+                <label><input type="radio" name="utensils" value="需要" checked> 需要餐具</label>
+                <label><input type="radio" name="utensils" value="不需要"> 不需要餐具</label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>📝 餐點內容（點擊 + 展開客製化選項）：</label>
+            
+            <div class="item-container" id="container_item1">
+                <div class="menu-item">
+                    <div><span class="menu-name">肉羹麵線 (小)</span> <span class="menu-price">$40</span></div>
+                    <div class="qty-control">
+                        <button class="qty-btn" onclick="changeQty('item1', -1)">-</button>
+                        <input type="text" id="item1" class="qty-input item-data" value="0" data-name="肉羹麵線(小)" data-price="40" readonly>
+                        <button class="qty-btn" onclick="changeQty('item1', 1)">+</button>
+                    </div>
                 </div>
-                <div class="qty-control">
-                    <button class="qty-btn" onclick="changeQty('item1', -1)">-</button>
-                    <input type="text" id="item1" class="qty-input item-data" value="0" data-name="滷肉飯(小)" data-price="35" readonly>
-                    <button class="qty-btn" onclick="changeQty('item1', 1)">+</button>
+                <div class="custom-options" id="options_item1">
+                    <div class="option-title">口味調整：</div>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" class="opt-garlic"> 不要加蒜</label>
+                        <label><input type="checkbox" class="opt-cilantro"> 不要加香菜</label>
+                    </div>
+                    <div class="option-title">選擇辣度：
+                        <select class="spice-select"><option>不要辣</option><option>微辣</option><option>小辣</option><option>中辣</option><option>大辣</option></select>
+                    </div>
                 </div>
             </div>
-            <!-- 品項 2 -->
-            <div class="menu-item">
-                <div>
-                    <div class="menu-name">滷肉飯 (大)</div>
-                    <div class="menu-price">$50</div>
+
+            <div class="item-container" id="container_item2">
+                <div class="menu-item">
+                    <div><span class="menu-name">肉羹麵線 (中)</span> <span class="menu-price">$50</span></div>
+                    <div class="qty-control">
+                        <button class="qty-btn" onclick="changeQty('item2', -1)">-</button>
+                        <input type="text" id="item2" class="qty-input item-data" value="0" data-name="肉羹麵線(中)" data-price="50" readonly>
+                        <button class="qty-btn" onclick="changeQty('item2', 1)">+</button>
+                    </div>
                 </div>
-                <div class="qty-control">
-                    <button class="qty-btn" onclick="changeQty('item2', -1)">-</button>
-                    <input type="text" id="item2" class="qty-input item-data" value="0" data-name="滷肉飯(大)" data-price="50" readonly>
-                    <button class="qty-btn" onclick="changeQty('item2', 1)">+</button>
-                </div>
-            </div>
-            <!-- 品項 3 -->
-            <div class="menu-item">
-                <div>
-                    <div class="menu-name">貢丸湯</div>
-                    <div class="menu-price">$30</div>
-                </div>
-                <div class="qty-control">
-                    <button class="qty-btn" onclick="changeQty('item3', -1)">-</button>
-                    <input type="text" id="item3" class="qty-input item-data" value="0" data-name="貢丸湯" data-price="30" readonly>
-                    <button class="qty-btn" onclick="changeQty('item3', 1)">+</button>
+                <div class="custom-options" id="options_item2">
+                    <div class="option-title">口味調整：</div>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" class="opt-garlic"> 不要加蒜</label>
+                        <label><input type="checkbox" class="opt-cilantro"> 不要加香菜</label>
+                    </div>
+                    <div class="option-title">選擇辣度：
+                        <select class="spice-select"><option>不要辣</option><option>微辣</option><option>小辣</option><option>中辣</option><option>大辣</option></select>
+                    </div>
                 </div>
             </div>
+
+            <div class="item-container" id="container_item3">
+                <div class="menu-item">
+                    <div><span class="menu-name">肉羹麵線 (大)</span> <span class="menu-price">$60</span></div>
+                    <div class="qty-control">
+                        <button class="qty-btn" onclick="changeQty('item3', -1)">-</button>
+                        <input type="text" id="item3" class="qty-input item-data" value="0" data-name="肉羹麵線(大)" data-price="60" readonly>
+                        <button class="qty-btn" onclick="changeQty('item3', 1)">+</button>
+                    </div>
+                </div>
+                <div class="custom-options" id="options_item3">
+                    <div class="option-title">口味調整：</div>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" class="opt-garlic"> 不要加蒜</label>
+                        <label><input type="checkbox" class="opt-cilantro"> 不要加香菜</label>
+                    </div>
+                    <div class="option-title">選擇辣度：
+                        <select class="spice-select"><option>不要辣</option><option>微辣</option><option>小辣</option><option>中辣</option><option>大辣</option></select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="item-container" id="container_item4">
+                <div class="menu-item">
+                    <div><span class="menu-name">臭豆腐 (小)</span> <span class="menu-price">$50</span></div>
+                    <div class="qty-control">
+                        <button class="qty-btn" onclick="changeQty('item4', -1)">-</button>
+                        <input type="text" id="item4" class="qty-input item-data" value="0" data-name="臭豆腐(小)" data-price="50" readonly>
+                        <button class="qty-btn" onclick="changeQty('item4', 1)">+</button>
+                    </div>
+                </div>
+                <div class="custom-options" id="options_item4">
+                    <div class="option-title">口味調整：</div>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" class="opt-crispy"> 酥一點</label>
+                        <label><input type="checkbox" class="opt-garlic"> 不要加蒜</label>
+                    </div>
+                    <div class="option-title">選擇辣度：
+                        <select class="spice-select"><option>不要辣</option><option>微辣</option><option>小辣</option><option>中辣</option><option>大辣</option></select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="item-container" id="container_item5">
+                <div class="menu-item">
+                    <div><span class="menu-name">臭豆腐 (大)</span> <span class="menu-price">$75</span></div>
+                    <div class="qty-control">
+                        <button class="qty-btn" onclick="changeQty('item5', -1)">-</button>
+                        <input type="text" id="item5" class="qty-input item-data" value="0" data-name="臭豆腐(大)" data-price="75" readonly>
+                        <button class="qty-btn" onclick="changeQty('item5', 1)">+</button>
+                    </div>
+                </div>
+                <div class="custom-options" id="options_item5">
+                    <div class="option-title">口味調整：</div>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" class="opt-crispy"> 酥一點</label>
+                        <label><input type="checkbox" class="opt-garlic"> 不要加蒜</label>
+                    </div>
+                    <div class="option-title">選擇辣度：
+                        <select class="spice-select"><option>不要辣</option><option>微辣</option><option>小辣</option><option>中辣</option><option>大辣</option></select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="item-container" id="container_item6">
+                <div class="menu-item">
+                    <div><span class="menu-name">蔥抓餅 (無蛋)</span> <span class="menu-price">$25</span></div>
+                    <div class="qty-control">
+                        <button class="qty-btn" onclick="changeQty('item6', -1)">-</button>
+                        <input type="text" id="item6" class="qty-input item-data" value="0" data-name="蔥抓餅(無蛋)" data-price="25" readonly>
+                        <button class="qty-btn" onclick="changeQty('item6', 1)">+</button>
+                    </div>
+                </div>
+                <div class="custom-options" id="options_item6">
+                    <div class="option-title">選擇辣度：
+                        <select class="spice-select"><option>不要辣</option><option>微辣</option><option>小辣</option><option>中辣</option><option>大辣</option></select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="item-container" id="container_item7">
+                <div class="menu-item">
+                    <div><span class="menu-name">蔥抓餅 (加蛋)</span> <span class="menu-price">$40</span></div>
+                    <div class="qty-control">
+                        <button class="qty-btn" onclick="changeQty('item7', -1)">-</button>
+                        <input type="text" id="item7" class="qty-input item-data" value="0" data-name="蔥抓餅(加蛋)" data-price="40" readonly>
+                        <button class="qty-btn" onclick="changeQty('item7', 1)">+</button>
+                    </div>
+                </div>
+                <div class="custom-options" id="options_item7">
+                    <div class="option-title">選擇辣度：
+                        <select class="spice-select"><option>不要辣</option><option>微辣</option><option>小辣</option><option>中辣</option><option>大辣</option></select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="item-container" id="container_item8">
+                <div class="menu-item">
+                    <div><span class="menu-name">蔥肉餅 (無蛋)</span> <span class="menu-price">$30</span></div>
+                    <div class="qty-control">
+                        <button class="qty-btn" onclick="changeQty('item8', -1)">-</button>
+                        <input type="text" id="item8" class="qty-input item-data" value="0" data-name="蔥肉餅(無蛋)" data-price="30" readonly>
+                        <button class="qty-btn" onclick="changeQty('item8', 1)">+</button>
+                    </div>
+                </div>
+                <div class="custom-options" id="options_item8">
+                    <div class="option-title">選擇辣度：
+                        <select class="spice-select"><option>不要辣</option><option>微辣</option><option>小辣</option><option>中辣</option><option>大辣</option></select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="item-container" id="container_item9">
+                <div class="menu-item">
+                    <div><span class="menu-name">蔥肉餅 (加蛋)</span> <span class="menu-price">$45</span></div>
+                    <div class="qty-control">
+                        <button class="qty-btn" onclick="changeQty('item9', -1)">-</button>
+                        <input type="text" id="item9" class="qty-input item-data" value="0" data-name="蔥肉餅(加蛋)" data-price="45" readonly>
+                        <button class="qty-btn" onclick="changeQty('item9', 1)">+</button>
+                    </div>
+                </div>
+                <div class="custom-options" id="options_item9">
+                    <div class="option-title">選擇辣度：
+                        <select class="spice-select"><option>不要辣</option><option>微辣</option><option>小辣</option><option>中辣</option><option>大辣</option></select>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
         <div class="form-group">
@@ -81,21 +260,70 @@
         </div>
 
         <div class="form-group">
-            <label>✏️ 備註 (可不填)：</label>
-            <input type="text" id="notes" placeholder="例如：不要香菜、12:30取餐">
+            <label>✏️ 其他備註：</label>
+            <input type="text" id="notes" placeholder="如有其他特殊需求請寫在這裡">
         </div>
 
         <button onclick="submitOrder()" id="submitBtn" class="submit-btn">🚀 送出訂單</button>
     </div>
 
     <script>
-        // 控制數量增減與自動計算總計
+        // 自動生成日期下拉選單 (今天 + 接下來7天)
+        window.onload = function() {
+            const monthSelect = document.getElementById("timeMonth");
+            const daySelect = document.getElementById("timeDay");
+            const hourSelect = document.getElementById("timeHour");
+            
+            // 生成24小時制的小時
+            for(let i=0; i<24; i++) {
+                let h = i < 10 ? "0"+i : i;
+                hourSelect.options.add(new Option(h, h));
+            }
+            
+            // 智慧日期滾動生成
+            let dateOptions = [];
+            for(let i=0; i<7; i++) {
+                let d = new Date();
+                d.setDate(d.getDate() + i);
+                let m = d.getMonth() + 1;
+                let day = d.getDate();
+                dateOptions.push({ m: m, d: day });
+            }
+            
+            // 塞入月份 (不重複)
+            let months = [...new Set(dateOptions.map(item => item.m))];
+            months.forEach(m => monthSelect.options.add(new Option(m, m)));
+            
+            // 根據選擇的月份連動日期
+            function updateDays() {
+                daySelect.innerHTML = "";
+                let selectedMonth = parseInt(monthSelect.value);
+                dateOptions.forEach(item => {
+                    if(item.m === selectedMonth) {
+                        daySelect.options.add(new Option(item.d, item.d));
+                    }
+                });
+            }
+            monthSelect.onchange = updateDays;
+            updateDays(); // 初始化
+        };
+
+        // 控制數量增減與自動展開客製化區塊
         function changeQty(inputId, amount) {
             let inputField = document.getElementById(inputId);
             let currentVal = parseInt(inputField.value);
             let newVal = currentVal + amount;
-            if (newVal < 0) newVal = 0; // 數量不能為負數
+            if (newVal < 0) newVal = 0;
             inputField.value = newVal;
+            
+            // 控制客製化面板展開/隱藏
+            let optionsPanel = document.getElementById("options_" + inputId);
+            if(newVal > 0) {
+                optionsPanel.style.display = "block";
+            } else {
+                optionsPanel.style.display = "none";
+            }
+            
             calculateTotal();
         }
 
@@ -110,62 +338,84 @@
             document.getElementById('displayTotal').innerText = total;
         }
 
-        // 送出訂單的邏輯
+        // 送出訂單
         function submitOrder() {
             const btn = document.getElementById("submitBtn");
             const customerName = document.getElementById("customerName").value;
-            const notes = document.getElementById("notes").value;
+            const customerPhone = document.getElementById("customerPhone").value;
             const total = document.getElementById("displayTotal").innerText;
+            const customNotes = document.getElementById("notes").value;
+            
+            // 取餐時間收集
+            const tM = document.getElementById("timeMonth").value;
+            const tD = document.getElementById("timeDay").value;
+            const tH = document.getElementById("timeHour").value;
+            const tMin = document.getElementById("timeMin").value;
+            const pickupTime = `${tM}月${tD}日 ${tH}:${tMin}`;
+            
+            // 餐具收集
+            const utensils = document.querySelector('input[name="utensils"]:checked').value;
 
-            if(customerName.trim() === "") {
-                alert("請輸入您的稱呼喔！");
-                return;
-            }
-            if(parseInt(total) === 0) {
-                alert("您還沒有點選餐點喔！");
-                return;
-            }
+            // 表單防呆驗證
+            if(customerName.trim() === "") { alert("請輸入您的稱呼喔！"); return; }
+            if(customerPhone.trim() === "") { alert("請輸入您的手機號碼喔！"); return; }
+            if(parseInt(total) === 0) { alert("您還沒有點選餐點喔！"); return; }
 
-            // 整理客人點的餐點文字
+            // 核心邏輯：打包餐點與專屬客製化文字
             let orderItemsArray = [];
             document.querySelectorAll('.item-data').forEach(item => {
                 let qty = parseInt(item.value);
                 if (qty > 0) {
                     let name = item.getAttribute('data-name');
-                    orderItemsArray.push(name + " x" + qty);
+                    let id = item.id;
+                    let panel = document.getElementById("options_" + id);
+                    
+                    // 撈取口味細節
+                    let details = [];
+                    let chks = panel.querySelectorAll('input[type="checkbox"]:checked');
+                    chks.forEach(c => details.push(c.parentNode.innerText.trim()));
+                    
+                    let spice = panel.querySelector('.spice-select');
+                    if(spice && spice.value !== "不要辣") {
+                        details.push(spice.value);
+                    }
+                    
+                    let detailStr = details.length > 0 ? ` (${details.join(', ')})` : '';
+                    orderItemsArray.push(`${name} x${qty}${detailStr}`);
                 }
             });
-            let orderItemsString = orderItemsArray.join(", ");
+            let orderItemsString = orderItemsArray.join("\n");
 
-            // 這裡替換成你的 Google Apps Script 網址
+            // 完美打包至後台相容變數
+            const packedName = `${customerName} (${customerPhone})`;
+            const packedNotes = `[預計取餐] ${pickupTime}\n[餐具需求] ${utensils}\n[老闆備註] ${customNotes}`;
+
+            // 你的 Google Apps Script 網址 (維持原樣)
             const scriptUrl = "https://script.google.com/macros/s/AKfycbynN_sVX8Fonmrwd_oxGOdbaebHz_lwgexbfIWZQI_yqrsVOVaaXwxjx5PEc1m_r6XXDQ/exec"; 
             
             btn.innerText = "訂單傳送中...";
             btn.disabled = true;
 
             const orderData = {
-                customerName: customerName,
+                customerName: packedName,
                 orderItems: orderItemsString,
                 totalPrice: total,
-                notes: notes
+                notes: packedNotes
             };
 
-            // 呼叫後台 (新的：加上轉址與純文字宣告，繞過瀏覽器阻擋)
             fetch(scriptUrl, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "text/plain;charset=utf-8"
-                },
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
                 body: JSON.stringify(orderData),
                 redirect: "follow"
             })
             .then(response => response.json())
             .then(data => {
-                alert("訂單已成功送出！老闆已收到通知。");
-                window.location.reload(); // 送出後重整頁面清空資料
+                alert("🎉 訂單已成功送出！高山頂小吃已收到通知囉！");
+                window.location.reload();
             })
             .catch(error => {
-                alert("送出失敗，請檢查網路連線，或直撥訂餐專線0933255870");
+                alert("送出失敗，請檢查網路連線，或直接向老闆點餐喔！");
             })
             .finally(() => {
                 btn.innerText = "🚀 送出訂單";
