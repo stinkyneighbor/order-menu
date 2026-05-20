@@ -182,10 +182,10 @@
             { id: 'm3', name: '肉羹麵線(大)', price: 60, type: 'noodle' },
             { id: 't1', name: '臭豆腐(小)', price: 50, type: 'tofu' },
             { id: 't2', name: '臭豆腐(大)', price: 75, type: 'tofu' },
-            { id: 'p1', name: '蔥抓餅(無蛋)', price: 25, type: 'pancake' },
-            { id: 'p2', name: '蔥抓餅(加蛋)', price: 40, type: 'pancake' },
-            { id: 'p3', name: '蔥肉餅(無蛋)', price: 30, type: 'pancake' },
-            { id: 'p4', name: '蔥肉餅(加蛋)', price: 45, type: 'pancake' }
+            { id: 'p1', name: '蔥抓餅(無蛋)', price: 25, type: 'pancake_scallion' },
+            { id: 'p2', name: '蔥抓餅(加蛋)', price: 40, type: 'pancake_scallion' },
+            { id: 'p3', name: '蔥肉餅(無蛋)', price: 30, type: 'pancake_meat' },
+            { id: 'p4', name: '蔥肉餅(加蛋)', price: 45, type: 'pancake_meat' }
         ];
 
         let cart = []; 
@@ -307,6 +307,28 @@
                         </div>
                     </div>`;
             }
+            // 新增：蔥抓餅專屬選項
+            if(item.type === 'pancake_scallion') {
+                bodyHtml += `
+                    <div class="option-group">
+                        <div class="option-title">調味調整 (可複選)：</div>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" value="不要胡椒" class="custom-chk"> 不要胡椒</label>
+                            <label><input type="checkbox" value="不要醬油膏" class="custom-chk"> 不要醬油膏</label>
+                        </div>
+                    </div>`;
+            }
+            // 新增：蔥肉餅專屬選項
+            if(item.type === 'pancake_meat') {
+                bodyHtml += `
+                    <div class="option-group">
+                        <div class="option-title">調味調整 (可複選)：</div>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" value="不要胡椒" class="custom-chk"> 不要胡椒</label>
+                        </div>
+                    </div>`;
+            }
+
             bodyHtml += `
                 <div class="option-group">
                     <div class="option-title">辣度選擇：</div>
