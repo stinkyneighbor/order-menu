@@ -175,7 +175,7 @@
     </div>
 
     <script>
-        // --- 1. 菜單資料庫 ---
+        // --- 1. 菜單資料庫 (已新增瓶裝水、紅茶、冬瓜茶) ---
         const menuData = [
             { id: 'm1', name: '肉羹麵線(小)', price: 40, type: 'noodle' },
             { id: 'm2', name: '肉羹麵線(中)', price: 50, type: 'noodle' },
@@ -185,7 +185,10 @@
             { id: 'p1', name: '蔥抓餅(無蛋)', price: 25, type: 'pancake_scallion' },
             { id: 'p2', name: '蔥抓餅(加蛋)', price: 40, type: 'pancake_scallion' },
             { id: 'p3', name: '蔥肉餅(無蛋)', price: 30, type: 'pancake_meat' },
-            { id: 'p4', name: '蔥肉餅(加蛋)', price: 45, type: 'pancake_meat' }
+            { id: 'p4', name: '蔥肉餅(加蛋)', price: 45, type: 'pancake_meat' },
+            { id: 'w1', name: '瓶裝水', price: 10, type: 'water' },
+            { id: 'd1', name: '冰紅茶（含糖）', price: 10, type: 'drink' },
+            { id: 'd2', name: '冬瓜茶', price: 10, type: 'drink' }
         ];
 
         let cart = []; 
@@ -215,20 +218,17 @@
             });
         }
 
-        // 精準連動：最早 14:30，最晚 21:00
         function initTimeSelects() {
             const monthSelect = document.getElementById("timeMonth");
             const daySelect = document.getElementById("timeDay");
             const hourSelect = document.getElementById("timeHour");
             const minSelect = document.getElementById("timeMin");
             
-            // 營業小時：14 點至 21 點
             for(let i=14; i<=21; i++) {
                 let h = i < 10 ? "0"+i : i;
                 hourSelect.options.add(new Option(h, h));
             }
             
-            // 小時與分鐘連動防呆
             function updateMinutes() {
                 minSelect.innerHTML = "";
                 let hr = parseInt(hourSelect.value);
@@ -274,7 +274,7 @@
             
             monthSelect.onchange = updateDays;
             updateDays(); 
-            updateMinutes(); // 初始化分鐘
+            updateMinutes(); 
         }
 
         // --- 3. 彈出客製化視窗邏輯 ---
@@ -307,7 +307,6 @@
                         </div>
                     </div>`;
             }
-            // 新增：蔥抓餅專屬選項
             if(item.type === 'pancake_scallion') {
                 bodyHtml += `
                     <div class="option-group">
@@ -318,7 +317,6 @@
                         </div>
                     </div>`;
             }
-            // 新增：蔥肉餅專屬選項
             if(item.type === 'pancake_meat') {
                 bodyHtml += `
                     <div class="option-group">
@@ -328,18 +326,32 @@
                         </div>
                     </div>`;
             }
+            // 新增：瓶裝水客製化溫度單選鈕 (預設選冰)
+            if(item.type === 'water') {
+                bodyHtml += `
+                    <div class="option-group">
+                        <div class="option-title">溫度選擇 (單選)：</div>
+                        <div class="checkbox-group">
+                            <label><input type="radio" name="waterTemp" value="冰" class="custom-chk" checked> 冰</label>
+                            <label><input type="radio" name="waterTemp" value="常溫" class="custom-chk"> 常溫</label>
+                        </div>
+                    </div>`;
+            }
 
-            bodyHtml += `
-                <div class="option-group">
-                    <div class="option-title">辣度選擇：</div>
-                    <select id="spiceLevel">
-                        <option value="不要辣">不要辣</option>
-                        <option value="微辣">微辣</option>
-                        <option value="小辣">小辣</option>
-                        <option value="中辣">中辣</option>
-                        <option value="大辣">大辣</option>
-                    </select>
-                </div>`;
+            // 智慧過濾：只有小吃類才需要顯示「辣度選擇」
+            if(['noodle', 'tofu', 'pancake_scallion', 'pancake_meat'].includes(item.type)) {
+                bodyHtml += `
+                    <div class="option-group">
+                        <div class="option-title">辣度選擇：</div>
+                        <select id="spiceLevel">
+                            <option value="不要辣">不要辣</option>
+                            <option value="微辣">微辣</option>
+                            <option value="小辣">小辣</option>
+                            <option value="中辣">中辣</option>
+                            <option value="大辣">大辣</option>
+                        </select>
+                    </div>`;
+            }
             
             document.getElementById('modalBody').innerHTML = bodyHtml;
             updateModalBtnPrice();
@@ -359,7 +371,6 @@
             updateModalBtnPrice();
         }
 
-        // 即時計算彈出視窗內的折扣總價
         function updateModalBtnPrice() {
             let basePrice = currentItem.price;
             let noKimchi = document.getElementById('noKimchiChk');
@@ -377,12 +388,16 @@
             document.querySelectorAll('.custom-chk:checked').forEach(chk => {
                 details.push(chk.value);
                 if (chk.value === "不要泡菜") {
-                    finalPrice -= 10; // 購物車單件單價折扣 10 元
+                    finalPrice -= 10; 
                 }
             });
             
-            let spice = document.getElementById('spiceLevel').value;
-            if(spice !== "不要辣") details.push(spice);
+            // 安全防呆：只有存在辣度選單時才讀取
+            let spiceEl = document.getElementById('spiceLevel');
+            if(spiceEl) {
+                let spice = spiceEl.value;
+                if(spice !== "不要辣") details.push(spice);
+            }
 
             cart.push({
                 name: currentItem.name,
