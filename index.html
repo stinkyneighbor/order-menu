@@ -74,7 +74,7 @@
     <div class="card" style="padding-bottom: 5px;">
         <h2>🍜 高山頂美食小吃</h2>
         <div class="store-info">
-            🕒 營業時間：週一 ~ 週六 14:30 - 21:00 (週日公休)<br>
+            🕒 營業時間：週一 ~ 週六 15:30 - 21:30 (週日公休)<br>
             📞 如需大量訂購請來電：<strong>0933-255-870</strong>
         </div>
     </div>
@@ -175,17 +175,20 @@
     </div>
 
     <script>
-        // --- 1. 菜單資料庫 (已新增瓶裝水、紅茶、冬瓜茶) ---
+        // --- 1. 菜單資料庫 (更新營業品項與價格) ---
         const menuData = [
-            { id: 'm1', name: '肉羹麵線(小)', price: 40, type: 'noodle' },
-            { id: 'm2', name: '肉羹麵線(中)', price: 50, type: 'noodle' },
-            { id: 'm3', name: '肉羹麵線(大)', price: 60, type: 'noodle' },
+            { id: 'm1', name: '肉羹麵', price: 60, type: 'noodle' },
+            { id: 'm4', name: '肉羹湯', price: 45, type: 'noodle' },
+            { id: 'sq1', name: '魷魚羹麵', price: 60, type: 'noodle' },
+            { id: 'sq2', name: '魷魚羹湯', price: 45, type: 'noodle' },
             { id: 't1', name: '臭豆腐(小)', price: 50, type: 'tofu' },
-            { id: 't2', name: '臭豆腐(大)', price: 75, type: 'tofu' },
+            { id: 't2', name: '臭豆腐(大)', price: 70, type: 'tofu' },
             { id: 'p1', name: '蔥抓餅(無蛋)', price: 25, type: 'pancake_scallion' },
             { id: 'p2', name: '蔥抓餅(加蛋)', price: 40, type: 'pancake_scallion' },
             { id: 'p3', name: '蔥肉餅(無蛋)', price: 30, type: 'pancake_meat' },
             { id: 'p4', name: '蔥肉餅(加蛋)', price: 45, type: 'pancake_meat' },
+            { id: 'r1', name: '滷肉飯(含油豆腐)', price: 45, type: 'rice' },
+            { id: 'n1', name: '肉燥乾麵', price: 45, type: 'dry_noodle' },
             { id: 'w1', name: '瓶裝水', price: 10, type: 'water' },
             { id: 'd1', name: '冰紅茶（含糖）', price: 10, type: 'drink' },
             { id: 'd2', name: '冬瓜茶', price: 10, type: 'drink' }
@@ -224,19 +227,23 @@
             const hourSelect = document.getElementById("timeHour");
             const minSelect = document.getElementById("timeMin");
             
-            for(let i=14; i<=21; i++) {
+            // 更新小時範圍：15 到 21
+            for(let i=15; i<=21; i++) {
                 let h = i < 10 ? "0"+i : i;
                 hourSelect.options.add(new Option(h, h));
             }
             
+            // 更新分鐘防呆邏輯
             function updateMinutes() {
                 minSelect.innerHTML = "";
                 let hr = parseInt(hourSelect.value);
-                if (hr === 14) {
+                if (hr === 15) {
                     minSelect.options.add(new Option("30", "30"));
                     minSelect.options.add(new Option("45", "45"));
                 } else if (hr === 21) {
                     minSelect.options.add(new Option("00", "00"));
+                    minSelect.options.add(new Option("15", "15"));
+                    minSelect.options.add(new Option("30", "30"));
                 } else {
                     minSelect.options.add(new Option("00", "00"));
                     minSelect.options.add(new Option("15", "15"));
@@ -326,7 +333,18 @@
                         </div>
                     </div>`;
             }
-            // 新增：瓶裝水客製化溫度單選鈕 (預設選冰)
+            // 新增：肉燥乾麵專屬加料選項
+            if(item.type === 'dry_noodle') {
+                bodyHtml += `
+                    <div class="option-group">
+                        <div class="option-title">加料選擇 (可複選)：</div>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" value="加蛋" class="custom-chk add-price-chk" data-price="15" onchange="updateModalBtnPrice()"> 加蛋 (+15元)</label>
+                            <label><input type="checkbox" value="加油豆腐" class="custom-chk add-price-chk" data-price="10" onchange="updateModalBtnPrice()"> 加油豆腐 (+10元)</label>
+                        </div>
+                    </div>`;
+            }
+            // 瓶裝水客製化溫度單選鈕
             if(item.type === 'water') {
                 bodyHtml += `
                     <div class="option-group">
@@ -338,8 +356,8 @@
                     </div>`;
             }
 
-            // 智慧過濾：只有小吃類才需要顯示「辣度選擇」
-            if(['noodle', 'tofu', 'pancake_scallion', 'pancake_meat'].includes(item.type)) {
+            // 智慧過濾：所有熟食、飯、麵都顯示辣度
+            if(['noodle', 'tofu', 'pancake_scallion', 'pancake_meat', 'rice', 'dry_noodle'].includes(item.type)) {
                 bodyHtml += `
                     <div class="option-group">
                         <div class="option-title">辣度選擇：</div>
@@ -373,10 +391,18 @@
 
         function updateModalBtnPrice() {
             let basePrice = currentItem.price;
+            
+            // 計算泡菜扣款
             let noKimchi = document.getElementById('noKimchiChk');
             if (noKimchi && noKimchi.checked) {
                 basePrice -= 10;
             }
+            
+            // 計算加料加價 (抓取有 data-price 屬性的 checkbox)
+            document.querySelectorAll('.add-price-chk:checked').forEach(chk => {
+                basePrice += parseInt(chk.getAttribute('data-price'));
+            });
+            
             document.getElementById('modalBtnPrice').innerText = basePrice * currentQty;
         }
 
@@ -389,6 +415,9 @@
                 details.push(chk.value);
                 if (chk.value === "不要泡菜") {
                     finalPrice -= 10; 
+                }
+                if (chk.classList.contains('add-price-chk')) {
+                    finalPrice += parseInt(chk.getAttribute('data-price'));
                 }
             });
             
