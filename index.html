@@ -175,7 +175,7 @@
     </div>
 
     <script>
-        // --- 1. 菜單資料庫 (更新營業品項與價格) ---
+        // --- 1. 菜單資料庫 ---
         const menuData = [
             { id: 'm1', name: '肉羹麵', price: 60, type: 'noodle' },
             { id: 'm4', name: '肉羹湯', price: 45, type: 'noodle' },
@@ -221,38 +221,12 @@
             });
         }
 
+        // --- 🌟 智慧時間與防呆邏輯 🌟 ---
         function initTimeSelects() {
             const monthSelect = document.getElementById("timeMonth");
             const daySelect = document.getElementById("timeDay");
             const hourSelect = document.getElementById("timeHour");
             const minSelect = document.getElementById("timeMin");
-            
-            // 更新小時範圍：15 到 21
-            for(let i=15; i<=21; i++) {
-                let h = i < 10 ? "0"+i : i;
-                hourSelect.options.add(new Option(h, h));
-            }
-            
-            // 更新分鐘防呆邏輯
-            function updateMinutes() {
-                minSelect.innerHTML = "";
-                let hr = parseInt(hourSelect.value);
-                if (hr === 15) {
-                    minSelect.options.add(new Option("30", "30"));
-                    minSelect.options.add(new Option("45", "45"));
-                } else if (hr === 21) {
-                    minSelect.options.add(new Option("00", "00"));
-                    minSelect.options.add(new Option("15", "15"));
-                    minSelect.options.add(new Option("30", "30"));
-                } else {
-                    minSelect.options.add(new Option("00", "00"));
-                    minSelect.options.add(new Option("15", "15"));
-                    minSelect.options.add(new Option("30", "30"));
-                    minSelect.options.add(new Option("45", "45"));
-                }
-            }
-            
-            hourSelect.onchange = updateMinutes;
             
             let today = new Date();
             let dateOptions = [];
@@ -266,6 +240,10 @@
             months.forEach(m => monthSelect.options.add(new Option(m, m)));
             monthSelect.value = today.getMonth() + 1;
             
+            function isTodaySelected() {
+                return parseInt(monthSelect.value) === (today.getMonth() + 1) && parseInt(daySelect.value) === today.getDate();
+            }
+
             function updateDays() {
                 daySelect.innerHTML = "";
                 let selectedMonth = parseInt(monthSelect.value);
@@ -277,11 +255,72 @@
                 if (selectedMonth === (today.getMonth() + 1)) {
                     daySelect.value = today.getDate();
                 }
+                updateHours(); 
+            }
+
+            function updateHours() {
+                hourSelect.innerHTML = "";
+                let now = new Date();
+                let minTime = new Date(now.getTime() + 15 * 60000); // 預留15分鐘製餐緩衝
+                let startHour = 15;
+                let endHour = 21;
+                let hasValidHour = false;
+
+                for(let i=startHour; i<=endHour; i++) {
+                    if (isTodaySelected()) {
+                        if (i < minTime.getHours()) continue; 
+                        
+                        let allowedMins = [0, 15, 30, 45];
+                        if (i === 15) allowedMins = [30, 45];
+                        if (i === 21) allowedMins = [0, 15, 30];
+                        
+                        if (i === minTime.getHours()) {
+                            allowedMins = allowedMins.filter(m => m >= minTime.getMinutes());
+                        }
+                        if (allowedMins.length === 0) continue; 
+                    }
+                    
+                    let h = i < 10 ? "0"+i : i;
+                    hourSelect.options.add(new Option(h, h));
+                    hasValidHour = true;
+                }
+
+                if (!hasValidHour) {
+                    hourSelect.options.add(new Option("今日已打烊", ""));
+                }
+                updateMinutes();
+            }
+            
+            function updateMinutes() {
+                minSelect.innerHTML = "";
+                if (hourSelect.value === "" || hourSelect.value === "今日已打烊") {
+                    minSelect.options.add(new Option("--", ""));
+                    return;
+                }
+
+                let hr = parseInt(hourSelect.value);
+                let now = new Date();
+                let minTime = new Date(now.getTime() + 15 * 60000);
+
+                let allowedMins = [0, 15, 30, 45];
+                if (hr === 15) allowedMins = [30, 45];
+                if (hr === 21) allowedMins = [0, 15, 30];
+
+                if (isTodaySelected() && hr === minTime.getHours()) {
+                    allowedMins = allowedMins.filter(m => m >= minTime.getMinutes());
+                }
+
+                allowedMins.forEach(m => {
+                    let minStr = m === 0 ? "00" : m;
+                    minSelect.options.add(new Option(minStr, minStr));
+                });
             }
             
             monthSelect.onchange = updateDays;
+            daySelect.onchange = updateHours;
+            hourSelect.onchange = updateMinutes;
+            
             updateDays(); 
-            updateMinutes(); 
         }
 
         // --- 3. 彈出客製化視窗邏輯 ---
@@ -333,7 +372,6 @@
                         </div>
                     </div>`;
             }
-            // 新增：肉燥乾麵專屬加料選項
             if(item.type === 'dry_noodle') {
                 bodyHtml += `
                     <div class="option-group">
@@ -344,7 +382,6 @@
                         </div>
                     </div>`;
             }
-            // 瓶裝水客製化溫度單選鈕
             if(item.type === 'water') {
                 bodyHtml += `
                     <div class="option-group">
@@ -356,7 +393,6 @@
                     </div>`;
             }
 
-            // 智慧過濾：所有熟食、飯、麵都顯示辣度
             if(['noodle', 'tofu', 'pancake_scallion', 'pancake_meat', 'rice', 'dry_noodle'].includes(item.type)) {
                 bodyHtml += `
                     <div class="option-group">
@@ -392,13 +428,11 @@
         function updateModalBtnPrice() {
             let basePrice = currentItem.price;
             
-            // 計算泡菜扣款
             let noKimchi = document.getElementById('noKimchiChk');
             if (noKimchi && noKimchi.checked) {
                 basePrice -= 10;
             }
             
-            // 計算加料加價 (抓取有 data-price 屬性的 checkbox)
             document.querySelectorAll('.add-price-chk:checked').forEach(chk => {
                 basePrice += parseInt(chk.getAttribute('data-price'));
             });
@@ -421,7 +455,6 @@
                 }
             });
             
-            // 安全防呆：只有存在辣度選單時才讀取
             let spiceEl = document.getElementById('spiceLevel');
             if(spiceEl) {
                 let spice = spiceEl.value;
