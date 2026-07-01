@@ -189,6 +189,9 @@
             { id: 'p4', name: '蔥肉餅(加蛋)', price: 45, type: 'pancake_meat' },
             { id: 'r1', name: '滷肉飯(含油豆腐)', price: 45, type: 'rice' },
             { id: 'n1', name: '肉燥乾麵', price: 45, type: 'dry_noodle' },
+            { id: 'a1', name: '荷包蛋', price: 15, type: 'egg' },
+            { id: 'a2', name: '泡菜一包', price: 10, type: 'side' },
+            { id: 'a3', name: '油豆腐一片', price: 10, type: 'side' },
             { id: 'w1', name: '瓶裝水', price: 10, type: 'water' },
             { id: 'd1', name: '冰紅茶（含糖）', price: 10, type: 'drink' },
             { id: 'd2', name: '冬瓜茶', price: 10, type: 'drink' }
@@ -198,7 +201,7 @@
         let currentItem = null; 
         let currentQty = 1;
 
-        // --- 2. 初始化網頁 ---
+        // --- 2. 初始化網頁與分類渲染 ---
         window.onload = function() {
             renderMenu();
             initTimeSelects();
@@ -206,7 +209,23 @@
 
         function renderMenu() {
             const menuList = document.getElementById('menuList');
+            menuList.innerHTML = ''; 
+            let currentCategory = '';
+            
             menuData.forEach(item => {
+                // 自動產生美觀的分類分隔線
+                if (['egg', 'side'].includes(item.type) && currentCategory !== 'alacarte') {
+                    const divider = document.createElement('div');
+                    divider.innerHTML = `<div style="font-size: 16px; font-weight: bold; color: #2c3e50; margin-top: 8px; border-bottom: 2px dashed #ffb74d; padding-bottom: 5px;">🍳 單點加料區</div>`;
+                    menuList.appendChild(divider);
+                    currentCategory = 'alacarte';
+                } else if (['water', 'drink'].includes(item.type) && currentCategory !== 'drinks') {
+                    const divider = document.createElement('div');
+                    divider.innerHTML = `<div style="font-size: 16px; font-weight: bold; color: #2c3e50; margin-top: 8px; border-bottom: 2px dashed #ffb74d; padding-bottom: 5px;">🥤 清涼飲品區</div>`;
+                    menuList.appendChild(divider);
+                    currentCategory = 'drinks';
+                }
+
                 const div = document.createElement('div');
                 div.className = 'menu-item-banner';
                 div.onclick = () => openModal(item);
@@ -261,7 +280,7 @@
             function updateHours() {
                 hourSelect.innerHTML = "";
                 let now = new Date();
-                let minTime = new Date(now.getTime() + 15 * 60000); // 預留15分鐘製餐緩衝
+                let minTime = new Date(now.getTime() + 15 * 60000); 
                 let startHour = 14;
                 let endHour = 21;
                 let hasValidHour = false;
@@ -323,6 +342,15 @@
             updateDays(); 
         }
 
+        // 全域函數：用來觸發半熟/全熟選單的顯示與隱藏
+        function toggleEggPref() {
+            let eggChk = document.getElementById('eggChk');
+            let eggPrefGroup = document.getElementById('eggPrefGroup');
+            if (eggChk && eggPrefGroup) {
+                eggPrefGroup.style.display = eggChk.checked ? 'block' : 'none';
+            }
+        }
+
         // --- 3. 彈出客製化視窗邏輯 ---
         function openModal(item) {
             currentItem = item;
@@ -331,6 +359,9 @@
             document.getElementById('modalQty').innerText = currentQty;
             
             let bodyHtml = '';
+            let needsEggPref = false;
+            let hasOptionalEgg = false;
+
             if(item.type === 'noodle') {
                 bodyHtml += `
                     <div class="option-group">
@@ -372,15 +403,26 @@
                         </div>
                     </div>`;
             }
+            if(item.type === 'rice') {
+                bodyHtml += `
+                    <div class="option-group">
+                        <div class="option-title">加料選擇 (可複選)：</div>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" value="加蛋" class="custom-chk add-price-chk" data-price="15" id="eggChk" onchange="toggleEggPref(); updateModalBtnPrice();"> 加蛋 (+15元)</label>
+                        </div>
+                    </div>`;
+                hasOptionalEgg = true;
+            }
             if(item.type === 'dry_noodle') {
                 bodyHtml += `
                     <div class="option-group">
                         <div class="option-title">加料選擇 (可複選)：</div>
                         <div class="checkbox-group">
-                            <label><input type="checkbox" value="加蛋" class="custom-chk add-price-chk" data-price="15" onchange="updateModalBtnPrice()"> 加蛋 (+15元)</label>
+                            <label><input type="checkbox" value="加蛋" class="custom-chk add-price-chk" data-price="15" id="eggChk" onchange="toggleEggPref(); updateModalBtnPrice();"> 加蛋 (+15元)</label>
                             <label><input type="checkbox" value="加油豆腐" class="custom-chk add-price-chk" data-price="10" onchange="updateModalBtnPrice()"> 加油豆腐 (+10元)</label>
                         </div>
                     </div>`;
+                hasOptionalEgg = true;
             }
             if(item.type === 'water') {
                 bodyHtml += `
@@ -389,6 +431,24 @@
                         <div class="checkbox-group">
                             <label><input type="radio" name="waterTemp" value="冰" class="custom-chk" checked> 冰</label>
                             <label><input type="radio" name="waterTemp" value="常溫" class="custom-chk"> 常溫</label>
+                        </div>
+                    </div>`;
+            }
+
+            // 判斷是否為「本身就含蛋」的餐點
+            if (item.id === 'p2' || item.id === 'p4' || item.type === 'egg') {
+                needsEggPref = true;
+            }
+
+            // 只要有蛋的可能，就先預載「蛋的熟度」區塊 (根據情境隱藏或顯示)
+            if (needsEggPref || hasOptionalEgg) {
+                let displayStyle = needsEggPref ? 'block' : 'none';
+                bodyHtml += `
+                    <div class="option-group" id="eggPrefGroup" style="display: ${displayStyle}; background: #fff3e0; padding: 12px; border-radius: 8px; border: 1px dashed #ffb74d;">
+                        <div class="option-title" style="color: #d35400;">🍳 蛋的熟度 (必選)：</div>
+                        <div class="checkbox-group">
+                            <label><input type="radio" name="eggDoneness" value="半熟" checked> 半熟 (流心)</label>
+                            <label><input type="radio" name="eggDoneness" value="全熟"> 全熟 (不見紅)</label>
                         </div>
                     </div>`;
             }
@@ -454,6 +514,18 @@
                     finalPrice += parseInt(chk.getAttribute('data-price'));
                 }
             });
+            
+            // 智慧蛋類處理：把半熟/全熟正確塞入明細中
+            let eggPrefGroup = document.getElementById('eggPrefGroup');
+            if (eggPrefGroup && eggPrefGroup.style.display === 'block') {
+                let doneness = document.querySelector('input[name="eggDoneness"]:checked').value;
+                let eggIndex = details.indexOf('加蛋');
+                if (eggIndex !== -1) {
+                    details[eggIndex] = `加蛋(${doneness})`; // 滷肉飯/乾麵 勾選加蛋的狀況
+                } else {
+                    details.push(doneness); // 蔥抓餅加蛋、單點荷包蛋等 本身自帶蛋的狀況
+                }
+            }
             
             let spiceEl = document.getElementById('spiceLevel');
             if(spiceEl) {
