@@ -174,7 +174,7 @@
         </div>
     </div>
 
-    <script>
+<script>
         // --- 1. 菜單資料庫 ---
         const menuData = [
             { id: 'm1', name: '肉羹麵', price: 60, type: 'noodle' },
@@ -183,10 +183,7 @@
             { id: 'sq2', name: '魷魚羹湯', price: 45, type: 'noodle' },
             { id: 't1', name: '臭豆腐(小)', price: 50, type: 'tofu' },
             { id: 't2', name: '臭豆腐(大)', price: 75, type: 'tofu' },
-            { id: 'p1', name: '蔥抓餅(無蛋)', price: 25, type: 'pancake_scallion' },
-            { id: 'p2', name: '蔥抓餅(加蛋)', price: 40, type: 'pancake_scallion' },
-            { id: 'p3', name: '蔥肉餅(無蛋)', price: 30, type: 'pancake_meat' },
-            { id: 'p4', name: '蔥肉餅(加蛋)', price: 45, type: 'pancake_meat' },
+            { id: 'p1', name: '蔥抓餅', price: 25, type: 'pancake_scallion' },
             { id: 'r1', name: '滷肉飯(含油豆腐)', price: 45, type: 'rice' },
             { id: 'r2', name: '爌肉飯(含油豆腐)', price: 65, type: 'rice' },
             { id: 'n1', name: '肉燥乾麵', price: 45, type: 'dry_noodle' },
@@ -386,21 +383,19 @@
             if(item.type === 'pancake_scallion') {
                 bodyHtml += `
                     <div class="option-group">
+                        <div class="option-title">加料選擇 (可複選)：</div>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" value="加蛋" class="custom-chk add-price-chk" data-price="15" id="eggChk" onchange="toggleEggPref(); updateModalBtnPrice();"> 加蛋 (+15元)</label>
+                        </div>
+                    </div>
+                    <div class="option-group">
                         <div class="option-title">調味調整 (可複選)：</div>
                         <div class="checkbox-group">
                             <label><input type="checkbox" value="不要胡椒" class="custom-chk"> 不要胡椒</label>
                             <label><input type="checkbox" value="不要醬油膏" class="custom-chk"> 不要醬油膏</label>
                         </div>
                     </div>`;
-            }
-            if(item.type === 'pancake_meat') {
-                bodyHtml += `
-                    <div class="option-group">
-                        <div class="option-title">調味調整 (可複選)：</div>
-                        <div class="checkbox-group">
-                            <label><input type="checkbox" value="不要胡椒" class="custom-chk"> 不要胡椒</label>
-                        </div>
-                    </div>`;
+                hasOptionalEgg = true;
             }
             if(item.type === 'rice') {
                 bodyHtml += `
@@ -435,7 +430,7 @@
             }
 
             // 判斷是否為「本身就含蛋」的餐點
-            if (item.id === 'p2' || item.id === 'p4' || item.type === 'egg') {
+            if (item.type === 'egg') {
                 needsEggPref = true;
             }
 
@@ -452,7 +447,7 @@
                     </div>`;
             }
 
-            if(['noodle', 'tofu', 'pancake_scallion', 'pancake_meat', 'rice', 'dry_noodle'].includes(item.type)) {
+            if(['noodle', 'tofu', 'pancake_scallion', 'rice', 'dry_noodle'].includes(item.type)) {
                 bodyHtml += `
                     <div class="option-group">
                         <div class="option-title">辣度選擇：</div>
@@ -520,9 +515,9 @@
                 let doneness = document.querySelector('input[name="eggDoneness"]:checked').value;
                 let eggIndex = details.indexOf('加蛋');
                 if (eggIndex !== -1) {
-                    details[eggIndex] = `加蛋(${doneness})`; // 滷肉飯/乾麵 勾選加蛋的狀況
+                    details[eggIndex] = `加蛋(${doneness})`; // 勾選加蛋的狀況
                 } else {
-                    details.push(doneness); // 蔥抓餅加蛋、單點荷包蛋等 本身自帶蛋的狀況
+                    details.push(doneness); // 本身自帶蛋的狀況
                 }
             }
             
