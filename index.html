@@ -175,20 +175,34 @@
     </div>
 
     <script>
-        // --- 1. 菜單資料庫 ---
+        // --- 1. 菜單資料庫 (依類別排序，方便網頁自動分區) ---
         const menuData = [
-            { id: 'm1', name: '肉羹麵', price: 60, type: 'noodle' },
-            { id: 'm4', name: '肉羹湯', price: 45, type: 'noodle' },
-            { id: 'sq1', name: '魷魚羹麵', price: 60, type: 'noodle' },
-            { id: 'sq2', name: '魷魚羹湯', price: 45, type: 'noodle' },
+            // 🍲 羹類大軍
+            { id: 'm1', name: '肉羹麵', price: 60, type: 'thick_soup' },
+            { id: 'm2', name: '肉羹飯', price: 60, type: 'thick_soup' },
+            { id: 'm4', name: '肉羹湯', price: 45, type: 'thick_soup' },
+            { id: 'sq1', name: '魷魚羹麵', price: 60, type: 'thick_soup' },
+            { id: 'sq3', name: '魷魚羹飯', price: 60, type: 'thick_soup' },
+            { id: 'sq2', name: '魷魚羹湯', price: 45, type: 'thick_soup' },
+            { id: 'mix1', name: '綜合羹麵', price: 70, type: 'thick_soup' },
+            { id: 'mix2', name: '綜合羹飯', price: 70, type: 'thick_soup' },
+            { id: 'mix3', name: '綜合羹湯', price: 55, type: 'thick_soup' },
+            
+            // 🍚 飯/麵類
+            { id: 'r1', name: '滷肉飯(含油豆腐)', price: 45, type: 'rice' },
+            { id: 'r2', name: '爌肉飯', price: 65, type: 'rice', image: 'conlorice.jpg' },
+            { id: 'n1', name: '肉燥乾麵(含油豆腐)', price: 45, type: 'dry_noodle' },
+
+            // 🧆 小吃與餅類
             { id: 't1', name: '臭豆腐(小)', price: 50, type: 'tofu' },
             { id: 't2', name: '臭豆腐(大)', price: 75, type: 'tofu' },
             { id: 'p1', name: '蔥抓餅', price: 25, type: 'pancake_scallion' },
-            { id: 'r1', name: '滷肉飯(含油豆腐)', price: 45, type: 'rice' },
-            { id: 'r2', name: '爌肉飯(含油豆腐)', price: 65, type: 'rice', image: 'conlorice.jpg' },
-            { id: 'n1', name: '肉燥乾麵', price: 45, type: 'dry_noodle' },
+
+            // 🍳 加料區
             { id: 'a1', name: '荷包蛋', price: 15, type: 'egg' },
             { id: 'a3', name: '油豆腐一片', price: 10, type: 'side' },
+
+            // 🥤 飲品區
             { id: 'w1', name: '瓶裝水', price: 10, type: 'water' },
             { id: 'd2', name: '冬瓜茶', price: 10, type: 'drink' }
         ];
@@ -209,17 +223,22 @@
             let currentCategory = '';
             
             menuData.forEach(item => {
-                // 自動產生美觀的分類分隔線
-                if (['egg', 'side'].includes(item.type) && currentCategory !== 'alacarte') {
+                let categoryId = '';
+                let categoryTitle = '';
+                
+                // 判斷當前品項屬於哪個分類大區塊
+                if (item.type === 'thick_soup') { categoryId = 'soup'; categoryTitle = '🍲 招牌羹湯區 (麵/飯/湯)'; }
+                else if (['rice', 'dry_noodle'].includes(item.type)) { categoryId = 'main'; categoryTitle = '🍚 經典飯麵區'; }
+                else if (['tofu', 'pancake_scallion'].includes(item.type)) { categoryId = 'snack'; categoryTitle = '🧆 人氣小吃區'; }
+                else if (['egg', 'side'].includes(item.type)) { categoryId = 'alacarte'; categoryTitle = '🍳 單點加料區'; }
+                else if (['water', 'drink'].includes(item.type)) { categoryId = 'drinks'; categoryTitle = '🥤 清涼飲品區'; }
+
+                // 遇到新分類時，插入分隔標題
+                if (currentCategory !== categoryId && categoryTitle !== '') {
                     const divider = document.createElement('div');
-                    divider.innerHTML = `<div style="font-size: 16px; font-weight: bold; color: #2c3e50; margin-top: 8px; border-bottom: 2px dashed #ffb74d; padding-bottom: 5px;">🍳 單點加料區</div>`;
+                    divider.innerHTML = `<div style="font-size: 16px; font-weight: bold; color: #2c3e50; margin-top: 15px; border-bottom: 2px dashed #ffb74d; padding-bottom: 5px; margin-bottom: 8px;">${categoryTitle}</div>`;
                     menuList.appendChild(divider);
-                    currentCategory = 'alacarte';
-                } else if (['water', 'drink'].includes(item.type) && currentCategory !== 'drinks') {
-                    const divider = document.createElement('div');
-                    divider.innerHTML = `<div style="font-size: 16px; font-weight: bold; color: #2c3e50; margin-top: 8px; border-bottom: 2px dashed #ffb74d; padding-bottom: 5px;">🥤 清涼飲品區</div>`;
-                    menuList.appendChild(divider);
-                    currentCategory = 'drinks';
+                    currentCategory = categoryId;
                 }
 
                 const div = document.createElement('div');
@@ -373,14 +392,16 @@
             let needsEggPref = false;
             let hasOptionalEgg = false;
 
-            if(item.type === 'noodle') {
+            if(item.type === 'thick_soup') {
                 bodyHtml += `
                     <div class="option-group">
                         <div class="option-title">配料調整 (可複選)：</div>
                         <div class="checkbox-group">
-                            <label><input type="checkbox" value="不要加蒜" class="custom-chk"> 不要加蒜</label>
-                            <label><input type="checkbox" value="不要加香菜" class="custom-chk"> 不要加香菜</label>
-                            <label><input type="checkbox" value="不要加烏醋" class="custom-chk"> 不要加烏醋</label>
+                            <label><input type="checkbox" value="不要蒜泥" class="custom-chk"> 不要蒜泥</label>
+                            <label><input type="checkbox" value="不要烏醋" class="custom-chk"> 不要烏醋</label>
+                            <label><input type="checkbox" value="不要香油" class="custom-chk"> 不要香油</label>
+                            <label><input type="checkbox" value="不要胡椒" class="custom-chk"> 不要胡椒</label>
+                            <label><input type="checkbox" value="不要九層塔" class="custom-chk"> 不要九層塔</label>
                         </div>
                     </div>`;
             }
@@ -390,7 +411,7 @@
                         <div class="option-title">口感與配料 (可複選)：</div>
                         <div class="checkbox-group">
                             <label><input type="checkbox" value="酥一點" class="custom-chk"> 酥一點</label>
-                            <label><input type="checkbox" value="不要加蒜" class="custom-chk"> 不要加蒜</label>
+                            <label><input type="checkbox" value="不要蒜泥" class="custom-chk"> 不要蒜泥</label>
                             <label><input type="checkbox" value="不要泡菜" class="custom-chk" id="noKimchiChk" onchange="updateModalBtnPrice()"> 不要泡菜 (每份折10元)</label>
                         </div>
                     </div>`;
@@ -419,6 +440,13 @@
                         <div class="checkbox-group">
                             <label><input type="checkbox" value="加蛋" class="custom-chk add-price-chk" data-price="15" id="eggChk" onchange="toggleEggPref(); updateModalBtnPrice();"> 加蛋 (+15元)</label>
                         </div>
+                    </div>
+                    <div class="option-group">
+                        <div class="option-title">配料調整 (可複選)：</div>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" value="不要蒜泥" class="custom-chk"> 不要蒜泥</label>
+                            <label><input type="checkbox" value="不要蔥" class="custom-chk"> 不要蔥</label>
+                        </div>
                     </div>`;
                 hasOptionalEgg = true;
             }
@@ -429,6 +457,13 @@
                         <div class="checkbox-group">
                             <label><input type="checkbox" value="加蛋" class="custom-chk add-price-chk" data-price="15" id="eggChk" onchange="toggleEggPref(); updateModalBtnPrice();"> 加蛋 (+15元)</label>
                             <label><input type="checkbox" value="加油豆腐" class="custom-chk add-price-chk" data-price="10" onchange="updateModalBtnPrice()"> 加油豆腐 (+10元)</label>
+                        </div>
+                    </div>
+                    <div class="option-group">
+                        <div class="option-title">配料調整 (可複選)：</div>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" value="不要蒜泥" class="custom-chk"> 不要蒜泥</label>
+                            <label><input type="checkbox" value="不要蔥" class="custom-chk"> 不要蔥</label>
                         </div>
                     </div>`;
                 hasOptionalEgg = true;
@@ -462,7 +497,7 @@
                     </div>`;
             }
 
-            if(['noodle', 'tofu', 'pancake_scallion', 'rice', 'dry_noodle'].includes(item.type)) {
+            if(['thick_soup', 'tofu', 'pancake_scallion', 'rice', 'dry_noodle'].includes(item.type)) {
                 bodyHtml += `
                     <div class="option-group">
                         <div class="option-title">辣度選擇：</div>
